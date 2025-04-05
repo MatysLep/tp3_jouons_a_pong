@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:tp3_jouons_a_pong/balle.dart';
 import 'package:tp3_jouons_a_pong/batte.dart';
@@ -19,6 +20,8 @@ class _PagePrincipaleState extends State<PagePrincipale>
   double hauteur = 400;
   double posX = 0;
   double posY = 0;
+  double randX = 1;
+  double randY = 1;
   double largeurBatte = 0;
   double hauteurBatte = 0;
   double positionBatte = 0;
@@ -41,8 +44,12 @@ class _PagePrincipaleState extends State<PagePrincipale>
     animation = Tween<double>(begin: 0, end: 100).animate(controleur);
     animation.addListener(() {
       safeSetState(() {
-        (hDir == Direction.droite) ? posX += increment : posX -= increment;
-        (vDir == Direction.bas) ? posY += increment : posY -= increment;
+        (hDir == Direction.droite)
+            ? posX += ((increment * randX).round())
+            : posX -= ((increment * randX).round());
+        (vDir == Direction.bas)
+            ? posY += ((increment * randY).round())
+            : posY -= ((increment * randY).round());
       });
       testerBordures();
     });
@@ -70,13 +77,14 @@ class _PagePrincipaleState extends State<PagePrincipale>
 
     if (posY <= 0) {
       vDir = Direction.bas;
+      randX = nombreAleatoire();
     } else if (posY >= HAUTEUR - Balle.DIAMETRE * 4) {
       if (posX >= positionBatte && posX <= positionBatte + largeurBatte) {
         _score++;
         vDir = Direction.haut;
+        randX = nombreAleatoire();
       } else {
         controleur.stop();
-        dispose();
         afficherMessage(context);
       }
       vDir = Direction.haut;
@@ -84,8 +92,10 @@ class _PagePrincipaleState extends State<PagePrincipale>
 
     if (posX <= 0) {
       hDir = Direction.droite;
+      randY = nombreAleatoire();
     } else if (posX >= LARGEUR - Balle.DIAMETRE) {
       hDir = Direction.gauche;
+      randY = nombreAleatoire();
     }
   }
 
@@ -94,15 +104,32 @@ class _PagePrincipaleState extends State<PagePrincipale>
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text("Game Over"),
-            content: Text("Votre score est de $_score"),
+            title: Text("Fin du jeu"),
+            content: Text(
+              "Votre score est de $_score \nVoulez-vous recommencer ?",
+              textAlign: TextAlign.center,
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  controleur.forward();
+                  dispose();
                 },
-                child: Text("Rejouer"),
+                child: Text("Non"),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    posX = Random().nextDouble() * (largeur - Balle.DIAMETRE);
+                    posY = 0;
+                    positionBatte = 0;
+                    controleur.stop();
+                  });
+                  Navigator.of(context).pop();
+                  controleur.repeat();
+                  _score = 0;
+                },
+                child: Text("Oui"),
               ),
             ],
           ),
@@ -115,11 +142,12 @@ class _PagePrincipaleState extends State<PagePrincipale>
     });
   }
 
+  double nombreAleatoire() {
+    return (Random().nextInt(100) + 50) / 100;
+  }
+
   @override
   Widget build(BuildContext context) {
-    double LARGEUR = MediaQuery.of(context).size.width;
-    double HAUTEUR = MediaQuery.of(context).size.height;
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Jeu Pong", style: TextStyle(color: Colors.white)),

@@ -27,7 +27,7 @@ class _PagePrincipaleState extends State<PagePrincipale>
   double randX = 1;
   double randY = 1;
   double largeurBatte = 0;
-  double hauteurBatte = 1;
+  double hauteurBatte = 0;
   double positionBatte = 0;
 
   Direction vDir = Direction.bas;
@@ -112,8 +112,8 @@ class _PagePrincipaleState extends State<PagePrincipale>
     if (posY <= 0) {
       vDir = Direction.bas;
       randX = nombreAleatoire();
-    } else if (posY >=
-        HAUTEUR - hauteurBatte - HAUTEUR * Batte.HAUTEUR - Balle.DIAMETRE * 4) {
+    } else if (posY + Balle.DIAMETRE >=
+        HAUTEUR - 4 * hauteurBatte - Balle.DIAMETRE) {
       if (posX >= positionBatte - (Balle.DIAMETRE / 2) &&
           posX <= positionBatte + largeurBatte + (Balle.DIAMETRE / 2)) {
         _score++;

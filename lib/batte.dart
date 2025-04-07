@@ -12,7 +12,10 @@ class Batte extends StatelessWidget {
     return Container(
       width: LARGEUR * 0.3,
       height: HAUTEUR * 0.02,
-      decoration: BoxDecoration(color: Colors.blue[900]),
+      decoration: BoxDecoration(
+        color: Colors.blue[900],
+        borderRadius: BorderRadius.circular(20),
+      ),
     );
   }
 }

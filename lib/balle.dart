@@ -12,7 +12,18 @@ class Balle extends StatelessWidget {
       height: DIAMETRE,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.yellowAccent,
+        gradient: const RadialGradient(
+          center: Alignment.center,
+          radius: 0.8,
+          colors: [
+            Color(0xFFB2FF59), // vert clair
+            Color(0xFF76FF03), // vert plus soutenu
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white, // simulant la couture d'une balle de tennis
+          width: 3,
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tp3_jouons_a_pong/balle.dart';
 import 'package:tp3_jouons_a_pong/batte.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tp3_jouons_a_pong/popup_fin_partie.dart';
 
 enum Direction { haut, bas, gauche, droite }
 
@@ -111,15 +112,22 @@ class _PagePrincipaleState extends State<PagePrincipale>
     if (posY <= 0) {
       vDir = Direction.bas;
       randX = nombreAleatoire();
-    } else if (posY >= HAUTEUR - hauteurBatte - Balle.DIAMETRE * 4) {
-      if (posX >= positionBatte && posX <= positionBatte + largeurBatte) {
+    } else if (posY >=
+        HAUTEUR - hauteurBatte - HAUTEUR * Batte.HAUTEUR - Balle.DIAMETRE * 4) {
+      if (posX >= positionBatte - (Balle.DIAMETRE / 2) &&
+          posX <= positionBatte + largeurBatte + (Balle.DIAMETRE / 2)) {
         _score++;
         vDir = Direction.haut;
         randX = nombreAleatoire();
       } else {
         controleur.stop();
         ecrireScoreMax();
-        afficherMessage(context);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return afficherMessage(context, _score, _scoreMax);
+          },
+        );
       }
       vDir = Direction.haut;
     }
@@ -133,46 +141,35 @@ class _PagePrincipaleState extends State<PagePrincipale>
     }
   }
 
-  Future<dynamic> afficherMessage(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text("Fin du jeu"),
-            content: Text(
-              "Votre score est de $_score \n Votre score max est de $_scoreMax voulez-vous recommencer ?",
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  dispose();
-                },
-                child: Text("Non"),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    posX = Random().nextDouble() * (largeur - Balle.DIAMETRE);
-                    posY = 0;
-                    positionBatte = 0;
-                    controleur.stop();
-                  });
-                  Navigator.of(context).pop();
-                  controleur.repeat();
-                  _score = 0;
-                },
-                child: Text("Oui"),
-              ),
-            ],
-          ),
+  Widget afficherMessage(BuildContext context, int score, int scoreMax) {
+    return PopupFinPartie(
+      score: score,
+      scoreMax: scoreMax,
+      onRestart: () {
+        Navigator.of(context).pop();
+        controleur.forward();
+        setState(() {
+          _score = 0;
+          posX = 0;
+          posY = 0;
+          positionBatte = 0;
+        });
+      },
+      onQuit: () {
+        Navigator.of(context).pop();
+        dispose();
+      },
     );
   }
 
   void deplacerBatte(DragUpdateDetails maj, BuildContext context) {
     safeSetState(() {
       positionBatte += maj.delta.dx;
+      if (positionBatte < 0) {
+        positionBatte = 0;
+      } else if (positionBatte + largeurBatte > largeur - 40) {
+        positionBatte = largeur - largeurBatte * 1.5;
+      }
     });
   }
 
@@ -184,8 +181,26 @@ class _PagePrincipaleState extends State<PagePrincipale>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Jeu Pong", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.brown,
+        title: Text(
+          "Jeu Pong",
+          style: TextStyle(color: Colors.white, fontFamily: "PressStart2P"),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF000428),
+                Color(0xFF000428),
+                Color(0xFF004e92),
+                Color(0xFFa044ff),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
@@ -193,20 +208,44 @@ class _PagePrincipaleState extends State<PagePrincipale>
           largeur = constraints.maxWidth;
           largeurBatte = largeur / 5;
           hauteurBatte = hauteur / 20;
-          return Stack(
-            children: [
-              Positioned(top: 0, right: 5, child: Text('Score: $_score')),
-              Positioned(top: posY, left: posX, child: Balle()),
-              Positioned(
-                bottom: hauteurBatte,
-                left: positionBatte,
-                child: GestureDetector(
-                  onHorizontalDragUpdate:
-                      (DragUpdateDetails maj) => deplacerBatte(maj, context),
-                  child: Batte(largeur: largeurBatte, hauteur: hauteurBatte),
-                ),
+          return Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: const [
+                  Color(0xFF000428), // deep navy blue
+                  Color(0xFF004e92), // medium blue
+                  Color(0xFFa044ff), // vibrant purple
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomRight,
               ),
-            ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  right: 5,
+                  child: Text(
+                    'Score: $_score',
+                    style: TextStyle(
+                      color: const Color.fromARGB(255, 253, 240, 200),
+                      fontSize: 15,
+                      fontFamily: "PressStart2P",
+                    ),
+                  ),
+                ),
+                Positioned(top: posY, left: posX, child: Balle()),
+                Positioned(
+                  bottom: hauteurBatte,
+                  left: positionBatte,
+                  child: GestureDetector(
+                    onHorizontalDragUpdate:
+                        (DragUpdateDetails maj) => deplacerBatte(maj, context),
+                    child: Batte(largeur: largeurBatte, hauteur: hauteurBatte),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
